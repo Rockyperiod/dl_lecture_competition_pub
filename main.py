@@ -14,6 +14,7 @@ from src.datasets import ThingsMEGDataset
 from src.models import BasicConvClassifier
 from src.utils import set_seed
 
+import mne # リサンプリングを行うために使用
 
 @hydra.main(version_base=None, config_path="configs", config_name="config")
 def run(args: DictConfig):
@@ -51,8 +52,8 @@ def run(args: DictConfig):
     # 正則化の追加
     #optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4) 
     # 学習率のスケジューリング
-    #scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.2)
-    #scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    #scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 0.8 ** epoch)
     
     # ------------------
     #   Start training
@@ -93,7 +94,7 @@ def run(args: DictConfig):
             val_loss.append(F.cross_entropy(y_pred, y).item())
             val_acc.append(accuracy(y_pred, y).item())
 
-        #scheduler.step()  # 学習率の更新
+        scheduler.step()  # 学習率の更新
 
         print(f"Epoch {epoch+1}/{args.epochs} | train loss: {np.mean(train_loss):.3f} | train acc: {np.mean(train_acc):.3f} | val loss: {np.mean(val_loss):.3f} | val acc: {np.mean(val_acc):.3f}")
         torch.save(model.state_dict(), os.path.join(logdir, "model_last.pt"))
