@@ -10,13 +10,14 @@ class BasicConvClassifier(nn.Module):
         num_classes: int,
         seq_len: int,
         in_channels: int,
-        hid_dim: int = 128
+        hid_dim: int = 128,
     ) -> None:
         super().__init__()
 
         self.blocks = nn.Sequential(
             ConvBlock(in_channels, hid_dim),
-            ConvBlock(hid_dim, hid_dim),
+            ConvBlock(hid_dim, hid_dim), 
+            ConvBlock(hid_dim, hid_dim), # 畳み込み層の追加
         )
 
         self.head = nn.Sequential(
@@ -52,10 +53,11 @@ class ConvBlock(nn.Module):
 
         self.conv0 = nn.Conv1d(in_dim, out_dim, kernel_size, padding="same")
         self.conv1 = nn.Conv1d(out_dim, out_dim, kernel_size, padding="same")
-        # self.conv2 = nn.Conv1d(out_dim, out_dim, kernel_size) # , padding="same")
+        self.conv2 = nn.Conv1d(out_dim, out_dim, kernel_size, padding="same")
         
         self.batchnorm0 = nn.BatchNorm1d(num_features=out_dim)
         self.batchnorm1 = nn.BatchNorm1d(num_features=out_dim)
+        self.batchnorm2 = nn.BatchNorm1d(num_features=out_dim) # 層の追加
 
         self.dropout = nn.Dropout(p_drop)
 
@@ -70,7 +72,8 @@ class ConvBlock(nn.Module):
         X = self.conv1(X) + X  # skip connection
         X = F.gelu(self.batchnorm1(X))
 
-        # X = self.conv2(X)
-        # X = F.glu(X, dim=-2)
+        # コメントアウトを解除しtえ追加
+        #X = self.conv2(X)
+        #X = F.glu(X, dim=-2)
 
         return self.dropout(X)
