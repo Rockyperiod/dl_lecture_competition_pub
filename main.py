@@ -8,6 +8,7 @@ from omegaconf import DictConfig
 import wandb
 from termcolor import cprint
 from tqdm import tqdm
+from torch.optim import lr_scheduler
 
 from src.datasets import ThingsMEGDataset
 from src.models import BasicConvClassifier
@@ -46,8 +47,13 @@ def run(args: DictConfig):
     # ------------------
     #     Optimizer
     # ------------------
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-
+    #optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    # 正則化の追加
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4) 
+    # 学習率のスケジューリング
+    #scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.2)
+    #scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 0.95 ** epoch)
+    
     # ------------------
     #   Start training
     # ------------------  
@@ -86,6 +92,8 @@ def run(args: DictConfig):
             
             val_loss.append(F.cross_entropy(y_pred, y).item())
             val_acc.append(accuracy(y_pred, y).item())
+
+        #scheduler.step()  # 学習率の更新
 
         print(f"Epoch {epoch+1}/{args.epochs} | train loss: {np.mean(train_loss):.3f} | train acc: {np.mean(train_acc):.3f} | val loss: {np.mean(val_loss):.3f} | val acc: {np.mean(val_acc):.3f}")
         torch.save(model.state_dict(), os.path.join(logdir, "model_last.pt"))
