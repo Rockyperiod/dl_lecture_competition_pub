@@ -27,7 +27,7 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
         # データの前処理
         self.preprocess_data()
 
-    # 前処理用関数追加
+    # 前処理用関数の追加
     def preprocess_data(self):
         self.X = self.X.numpy()
         for i in range(len(self.X)):
@@ -37,30 +37,32 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
             data = self.robust_scale_and_clip(data)
             self.X[i] = data
         self.X = torch.tensor(self.X)
+
     # リサンプリング
-    def resample(self, data, resample_freq):
-        # data: (n_channels, n_samples)
+    def resample(self, data, resample_freq): # resample_freq: リサンプリング周波数=120Hz
         original_freq = 1200 # 元のサンプリング周波数
         info = mne.create_info(ch_names=data.shape[0], sfreq=original_freq, ch_types="grad")
         raw = mne.io.RawArray(data, info)
         raw.resample(resample_freq)
         return raw.get_data()
 
+    # ベースライン補正
     def epoch_and_baseline_correct(self, data):
         original_freq = 1200  # 元のサンプリング周波数
-        resample_freq = self.resample_freq  # リサンプリング周波数
-        tmin = -0.5  # エポックの開始時間（秒）
-        tmax = 1.0  # エポックの終了時間（秒）
-        baseline = (None, 0)  # ベースライン補正区間
+        resample_freq = self.resample_freq
+        tmin = -0.5  # エポックの開始時間(s)
+        tmax = 1.0  # エポックの終了時間(s)
+        baseline = (None, 0)  # ベースライン
 
         info = mne.create_info(ch_names=data.shape[0], sfreq=original_freq, ch_types="grad")
         raw = mne.io.RawArray(data, info)
         
-        events = np.array([[int((i+0.5) * original_freq), 0, 1] for i in range(len(data[0]) // original_freq)])  # ダミーイベント
-        epochs = mne.Epochs(raw, events, event_id=1, tmin=tmin, tmax=tmax, baseline=baseline, preload=True)
+        events = np.array([[int((i+0.5) * original_freq), 0, 1] for i in range(len(data[0]) // original_freq)])  # ダミーイベントによるエポック分割
+        epochs = mne.Epochs(raw, events, event_id=1, tmin=tmin, tmax=tmax, baseline=baseline, preload=True) # ベースライン補正
         epochs.resample(resample_freq)
-        return epochs.get_data()[0]  # 最初のエポックを返す
+        return epochs.get_data()[0]
     
+    # ロバストスケーリングとクリッピング
     def robust_scale_and_clip(self, data):
         scaler = RobustScaler()
         data = scaler.fit_transform(data.T).T
