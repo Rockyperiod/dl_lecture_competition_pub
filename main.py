@@ -48,11 +48,11 @@ def run(args: DictConfig):
     # ------------------
     #     Optimizer
     # ------------------
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    #optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
     # 正則化の追加
-    #optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4) 
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-4) 
     # 学習率のスケジューリング
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.1)
     #scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lambda epoch: 0.8 ** epoch)
     
     # ------------------

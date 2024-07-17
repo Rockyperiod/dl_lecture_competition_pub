@@ -37,28 +37,28 @@ class ThingsMEGDataset(torch.utils.data.Dataset):
             data = self.robust_scale_and_clip(data)
             self.X[i] = data
         self.X = torch.tensor(self.X)
-
+    
     # リサンプリング
-    def resample(self, data, resample_freq): # resample_freq: リサンプリング周波数=120Hz
-        original_freq = 1200 # 元のサンプリング周波数
+    def resample(self, data, resample_freq):
+        original_freq = 200  # 元のサンプリング周波数
         info = mne.create_info(ch_names=data.shape[0], sfreq=original_freq, ch_types="grad")
         raw = mne.io.RawArray(data, info)
         raw.resample(resample_freq)
         return raw.get_data()
-
+    
     # ベースライン補正
     def epoch_and_baseline_correct(self, data):
-        original_freq = 1200  # 元のサンプリング周波数
-        resample_freq = self.resample_freq
+        original_freq = 200  # 元のサンプリング周波数
+        resample_freq = self.resample_freq  # リサンプリング周波数
         tmin = -0.5  # エポックの開始時間(s)
         tmax = 1.0  # エポックの終了時間(s)
-        baseline = (None, 0)  # ベースライン
+        baseline = (None, 0)  # ベースライン補正区間
 
         info = mne.create_info(ch_names=data.shape[0], sfreq=original_freq, ch_types="grad")
         raw = mne.io.RawArray(data, info)
-        
-        events = np.array([[int((i+0.5) * original_freq), 0, 1] for i in range(len(data[0]) // original_freq)])  # ダミーイベントによるエポック分割
-        epochs = mne.Epochs(raw, events, event_id=1, tmin=tmin, tmax=tmax, baseline=baseline, preload=True) # ベースライン補正
+
+        events = np.array([[int((i+0.5) * original_freq), 0, 1] for i in range(len(data[0]) // original_freq)])  # ダミーイベント
+        epochs = mne.Epochs(raw, events, event_id=1, tmin=tmin, tmax=tmax, baseline=baseline, preload=True)
         epochs.resample(resample_freq)
         return epochs.get_data()[0]
     

@@ -11,7 +11,7 @@ class BasicConvClassifier(nn.Module):
         seq_len: int,
         in_channels: int,
         hid_dim: int = 128,
-        p_drop: float = 0.5  # Dropoutを追加
+        p_drop: float = 0.25 #0.1  # Dropoutを追加
     ) -> None:
         super().__init__()
 
@@ -46,7 +46,7 @@ class ConvBlock(nn.Module):
         in_dim,
         out_dim,
         kernel_size: int = 3,
-        p_drop: float = 0.1,
+        p_drop: float = 0.25,
     ) -> None:
         super().__init__()
         
